@@ -22,14 +22,14 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->append(JsonLisible::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        // Toutes les erreurs de /api/* sont renvoyées en JSON, même sans en-tête "Accept: application/json".
+        // Toutes les erreurs de /api et /api/* sont renvoyées en JSON, même sans en-tête "Accept: application/json".
         $exceptions->shouldRenderJsonWhen(
-            fn (Request $request, Throwable $e) => $request->is('api/*') || $request->expectsJson()
+            fn (Request $request, Throwable $e) => $request->is('api', 'api/*') || $request->expectsJson()
         );
 
         // 422 : saisie invalide, avec un message clair par champ.
         $exceptions->render(function (ValidationException $e, Request $request) {
-            if ($request->is('api/*')) {
+            if ($request->is('api', 'api/*')) {
                 return response()->json([
                     'message' => 'Les données envoyées sont invalides.',
                     'errors' => $e->errors(),
@@ -39,7 +39,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // 404 : demande ou route inexistante.
         $exceptions->render(function (NotFoundHttpException $e, Request $request) {
-            if ($request->is('api/*')) {
+            if ($request->is('api', 'api/*')) {
                 $message = $e->getPrevious() instanceof ModelNotFoundException
                     ? 'Demande introuvable.'
                     : 'Ressource introuvable.';
@@ -50,7 +50,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // 405 : mauvaise méthode HTTP sur une route existante.
         $exceptions->render(function (MethodNotAllowedHttpException $e, Request $request) {
-            if ($request->is('api/*')) {
+            if ($request->is('api', 'api/*')) {
                 return response()->json(['message' => 'Méthode HTTP non autorisée pour cette route.'], 405);
             }
         });

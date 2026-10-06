@@ -223,6 +223,19 @@ class DemandeApiTest extends TestCase
         $this->getJson('/api/statistiques')->assertJsonPath('data.total', 4);
     }
 
+    // ---------- Point d'entrée et données de démonstration ----------
+
+    public function test_le_point_d_entree_de_l_api_liste_les_routes(): void
+    {
+        $this->get('/api')
+            ->assertOk()
+            ->assertJsonStructure(['message', 'routes' => [['methode', 'route', 'role']], 'exemples'])
+            ->assertJsonFragment(['methode' => 'POST', 'route' => '/api/demandes']);
+
+        // /api est traité comme le reste de l'API : erreur en JSON, même sans en-tête Accept.
+        $this->delete('/api')->assertStatus(405)->assertJsonPath('message', 'Méthode HTTP non autorisée pour cette route.');
+    }
+
     // ---------- Écran ----------
 
     public function test_l_ecran_de_depot_et_de_consultation_s_affiche(): void
