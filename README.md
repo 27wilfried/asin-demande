@@ -52,7 +52,7 @@ La commande `--seed` crée :
 
 - pour l'usager **NPI `1234567890`** : 3 demandes déposées, 2 en cours, 1 validée et 1 rejetée, à des dates différentes, ce qui permet de vérifier le tri ;
 - pour l'usager **NPI `0987654321`** : 2 demandes déposées ;
-- pour l'usager **NPI `1111111111`** : 25 demandes déposées, pour voir la pagination (20 en page 1, 5 en page 2). Les 7 demandes de l'usager `1234567890` tiennent sur une seule page de 20 : pour paginer ce dernier, choisir 5 par page à l'écran, ou utiliser `?par_page=5` dans l'API.
+- pour l'usager **NPI `1111111111`** : 25 demandes déposées, pour voir la pagination (20 en page 1, 5 en page 2). L'écran affiche 5 demandes par page par défaut (choix 5, 10 ou 20), avec des numéros de page : la pagination des 7 demandes de l'usager `1234567890` est donc visible dès l'ouverture (2 pages). Dans l'API, la valeur par défaut est 20 (`?par_page=5` pour paginer plus finement).
 
 Pour repartir d'une base vide : `php artisan migrate:fresh`. Pour la remettre avec les données de démonstration : `php artisan migrate:fresh --seed`.
 
