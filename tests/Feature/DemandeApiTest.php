@@ -250,13 +250,13 @@ class DemandeApiTest extends TestCase
 
     // ---------- Écran ----------
 
-    public function test_l_ecran_de_depot_et_de_consultation_s_affiche(): void
+    public function test_l_ecran_de_consultation_s_affiche(): void
     {
         $this->get('/')
             ->assertOk()
-            ->assertSee('Déposer une demande')
-            ->assertSee("Demandes d'un usager", false)
-            ->assertSee('Certificat de résidence')
-            ->assertSee('En cours de traitement');
+            ->assertSee("Suivi des demandes d'actes", false)
+            ->assertSee("NPI de l'usager", false)
+            // Les options du filtre viennent de l'enum StatutDemande.
+            ->assertSee('<option value="en_cours">En cours de traitement</option>', false);
     }
 }
