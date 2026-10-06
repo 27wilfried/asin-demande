@@ -31,6 +31,7 @@
         .message.erreur { color: #b42318; }
         .message.succes { color: #0b6e4f; }
         .pagination { display: flex; gap: 8px; align-items: center; margin-top: 12px; }
+        .aide { font-size: 0.85rem; color: #52606d; margin: 0 0 12px; }
     </style>
 </head>
 <body>
@@ -76,8 +77,16 @@
                     @endforeach
                 </select>
             </label>
+            <label>Par page
+                <select id="par-page">
+                    <option value="5">5</option>
+                    <option value="10">10</option>
+                    <option value="20" selected>20 (maximum)</option>
+                </select>
+            </label>
             <button type="submit">Afficher</button>
         </form>
+        <p class="aide">Données de démonstration : NPI 1234567890 (tous les statuts), NPI 1111111111 (25 demandes, sur 2 pages).</p>
 
         <div id="message-liste" class="message"></div>
         <div id="stats" class="stats"></div>
@@ -173,7 +182,7 @@
         const statut = el('statut').value;
         afficherMessage('message-liste', '', '');
 
-        const params = new URLSearchParams({ page });
+        const params = new URLSearchParams({ page, par_page: el('par-page').value });
         if (statut) params.set('statut', statut);
 
         try {

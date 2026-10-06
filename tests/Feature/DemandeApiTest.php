@@ -236,6 +236,18 @@ class DemandeApiTest extends TestCase
         $this->delete('/api')->assertStatus(405)->assertJsonPath('message', 'Méthode HTTP non autorisée pour cette route.');
     }
 
+    public function test_les_donnees_de_demonstration_permettent_de_voir_la_pagination(): void
+    {
+        $this->seed();
+
+        $this->getJson('/api/usagers/1111111111/demandes')
+            ->assertJsonCount(20, 'data')
+            ->assertJsonPath('meta.last_page', 2);
+
+        $this->getJson('/api/usagers/1111111111/demandes?page=2')->assertJsonCount(5, 'data');
+        $this->getJson('/api/usagers/1234567890/demandes')->assertJsonPath('meta.total', 7);
+    }
+
     // ---------- Écran ----------
 
     public function test_l_ecran_de_depot_et_de_consultation_s_affiche(): void
