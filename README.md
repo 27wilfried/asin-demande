@@ -44,14 +44,15 @@ php artisan migrate --seed        # crée les tables et des données de démonst
 php artisan serve                 # démarre l'application sur http://127.0.0.1:8000
 ```
 
-L'API répond alors sur `http://127.0.0.1:8000/api`, et l'écran est disponible sur `http://127.0.0.1:8000`. Il permet de déposer une demande, de consulter les demandes d'un usager (filtre par statut, compteurs, pagination) et de les faire avancer dans leur cycle de vie (prendre en charge, valider, rejeter avec motif). Les messages d'erreur de l'API y sont affichés tels quels.
+L'API répond alors sous `http://127.0.0.1:8000/api/...` : ouvrir `http://127.0.0.1:8000/api` dans un navigateur affiche la liste des routes disponibles, avec des liens d'exemple. L'écran est disponible sur `http://127.0.0.1:8000`. Il permet de déposer une demande, de consulter les demandes d'un usager (filtre par statut, compteurs, pagination) et de les faire avancer dans leur cycle de vie (prendre en charge, valider, rejeter avec motif). Les messages d'erreur de l'API y sont affichés tels quels.
 
 ### Données de démonstration
 
 La commande `--seed` crée :
 
 - pour l'usager **NPI `1234567890`** : 3 demandes déposées, 2 en cours, 1 validée et 1 rejetée, à des dates différentes, ce qui permet de vérifier le tri ;
-- pour l'usager **NPI `0987654321`** : 2 demandes déposées.
+- pour l'usager **NPI `0987654321`** : 2 demandes déposées ;
+- pour l'usager **NPI `1111111111`** : 25 demandes déposées, pour voir la pagination (20 en page 1, 5 en page 2). Les 7 demandes de l'usager `1234567890` tiennent sur une seule page de 20 : pour paginer ce dernier, choisir 5 par page à l'écran, ou utiliser `?par_page=5` dans l'API.
 
 Pour repartir d'une base vide : `php artisan migrate:fresh`. Pour la remettre avec les données de démonstration : `php artisan migrate:fresh --seed`.
 
@@ -71,6 +72,7 @@ Toutes les routes sont préfixées par `/api`. Les échanges se font en JSON. L'
 
 | Méthode | Route | Rôle |
 |---|---|---|
+| `GET` | `/api` | Point d'entrée : liste des routes disponibles et liens d'exemple |
 | `POST` | `/api/demandes` | Déposer une demande |
 | `GET` | `/api/usagers/{npi}/demandes` | Demandes d'un usager, de la plus récente à la plus ancienne, avec filtre facultatif `?statut=` |
 | `PATCH` | `/api/demandes/{id}/statut` | Faire avancer une demande dans son cycle de vie |
@@ -118,9 +120,10 @@ Le statut est toujours imposé à `deposee` par le serveur. Un champ `statut` en
 
 `GET /api/usagers/1234567890/demandes`
 `GET /api/usagers/1234567890/demandes?statut=en_cours`
-`GET /api/usagers/1234567890/demandes?page=2&par_page=10`
+`GET /api/usagers/1111111111/demandes?page=2`
+`GET /api/usagers/1234567890/demandes?page=2&par_page=5`
 
-Paramètres facultatifs : `statut`, `page` (1 par défaut) et `par_page` (20 par défaut, 20 au maximum).
+Paramètres facultatifs : `statut`, `page` (1 par défaut) et `par_page` (20 par défaut, 20 au maximum). Une page au-delà de la dernière renvoie une liste `data` vide.
 
 Réponse **200** : `data` contient les demandes, triées de la plus récente à la plus ancienne ; `meta` contient `current_page`, `last_page`, `per_page` et `total` ; `links` contient les URL des pages.
 
@@ -239,6 +242,7 @@ app/
 │   └── TransitionInterditeException.php   # action interdite -> HTTP 409
 ├── Http/
 │   ├── Controllers/
+│   │   ├── AccueilApiController.php # GET /api : liste des routes
 │   │   ├── DemandeController.php    # endpoints des demandes (contrôleur fin)
 │   │   └── StatistiqueController.php
 │   ├── Middleware/
@@ -290,7 +294,7 @@ tests/
 
 - Pagination de la liste, 20 demandes par page au maximum
 - Nombre de demandes par statut (`/api/statistiques`)
-- Tests automatisés des règles de gestion (`php artisan test`) : 44 tests, dont les 16 combinaisons de transitions du cycle de vie
+- Tests automatisés des règles de gestion (`php artisan test`) : 46 tests, dont les 16 combinaisons de transitions du cycle de vie
 - Écran simple (`http://127.0.0.1:8000`) : liste des demandes d'un usager, avec en plus un formulaire de dépôt et des boutons de traitement, pour tester tout le socle depuis le navigateur
 
 ### Ce qui manque, et pourquoi
