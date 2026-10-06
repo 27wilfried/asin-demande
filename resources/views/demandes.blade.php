@@ -96,7 +96,12 @@
         .rejetee { --couleur: var(--rejetee); --couleur-fond: var(--rejetee-fond); }
 
         .pagination { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-top: 16px; }
-        .pagination .boutons { display: flex; gap: 8px; }
+        .pagination .boutons { display: flex; flex-wrap: wrap; gap: 8px; }
+        .pages { display: flex; gap: 4px; }
+        .page { min-width: 42px; padding: 10px 12px; background: var(--surface); border: 1px solid var(--bordure); color: var(--texte); font-variant-numeric: tabular-nums; }
+        .page:hover:not(:disabled) { border-color: var(--primaire); color: var(--primaire); }
+        .page.active { background: var(--primaire); border-color: var(--primaire); color: #fff; opacity: 1; }
+        .ellipse { align-self: center; padding: 0 4px; color: var(--discret); }
 
         /* Skeleton loader */
         .squelette { display: block; height: 12px; border-radius: 6px; background: linear-gradient(90deg, #eceff3 25%, #f6f8fa 37%, #eceff3 63%); background-size: 400% 100%; animation: reflet 1.4s ease infinite; }
@@ -152,9 +157,10 @@
             </label>
             <label class="champ">Par page
                 <select id="par-page">
-                    <option value="5">5</option>
+                    {{-- 5 par défaut pour que la pagination soit visible dès l'ouverture ; l'API accepte au plus 20. --}}
+                    <option value="5" selected>5</option>
                     <option value="10">10</option>
-                    <option value="20" selected>20 (max.)</option>
+                    <option value="20">20 (max.)</option>
                 </select>
             </label>
             <button type="submit" class="bouton principal">Afficher</button>
@@ -185,10 +191,11 @@
         </div>
         <div class="pagination">
             <span id="resume" class="discret"></span>
-            <div class="boutons">
+            <nav class="boutons" aria-label="Pagination">
                 <button id="precedent" class="bouton secondaire" disabled>← Précédent</button>
+                <div id="pages" class="pages"></div>
                 <button id="suivant" class="bouton secondaire" disabled>Suivant →</button>
-            </div>
+            </nav>
         </div>
     </section>
 </main>
@@ -291,7 +298,7 @@
         if (avecStats) squeletteStats();
         el('titre-liste').textContent = `Demandes de l'usager ${npi}`;
         el('info-page').textContent = el('resume').textContent = '';
-        el('precedent').disabled = el('suivant').disabled = true;
+        document.querySelectorAll('.pagination button').forEach((b) => { b.disabled = true; });
 
         const params = new URLSearchParams({ page, par_page: el('par-page').value });
         if (statut) params.set('statut', statut);
@@ -358,6 +365,21 @@
             : '';
         el('precedent').disabled = !meta || meta.current_page <= 1;
         el('suivant').disabled = !meta || meta.current_page >= meta.last_page;
+
+        el('pages').innerHTML = meta && meta.last_page > 1
+            ? numerosDePage(meta.current_page, meta.last_page).map((n) => (n === '…'
+                ? '<span class="ellipse">…</span>'
+                : `<button class="bouton page${n === meta.current_page ? ' active' : ''}" data-page="${n}"
+                           ${n === meta.current_page ? 'aria-current="page" disabled' : ''}>${n}</button>`)).join('')
+            : '';
+    }
+
+    /** Numéros à afficher : première, dernière et voisines de la page courante, avec « … » entre les trous. */
+    function numerosDePage(courante, derniere) {
+        const liste = [...new Set([1, courante - 1, courante, courante + 1, derniere])]
+            .filter((n) => n >= 1 && n <= derniere)
+            .sort((a, b) => a - b);
+        return liste.flatMap((n, i) => (i > 0 && n - liste[i - 1] > 1 ? ['…', n] : [n]));
     }
 
     function afficherStats({ total, par_statut }) {
@@ -446,6 +468,12 @@
     el('par-page').addEventListener('change', () => { page = 1; charger({ avecStats: false }); });
     el('precedent').addEventListener('click', () => { page--; charger({ avecStats: false }); });
     el('suivant').addEventListener('click', () => { page++; charger({ avecStats: false }); });
+    el('pages').addEventListener('click', (e) => {
+        const bouton = e.target.closest('button[data-page]');
+        if (!bouton) return;
+        page = Number(bouton.dataset.page);
+        charger({ avecStats: false });
+    });
 
     // Un clic sur une carte de statistiques filtre la liste sur ce statut.
     el('stats').addEventListener('click', (e) => {
