@@ -44,7 +44,7 @@ php artisan migrate --seed        # crée les tables et des données de démonst
 php artisan serve                 # démarre l'application sur http://127.0.0.1:8000
 ```
 
-L'API répond alors sous `http://127.0.0.1:8000/api/...` : ouvrir `http://127.0.0.1:8000/api` dans un navigateur affiche la liste des routes disponibles, avec des liens d'exemple. L'écran est disponible sur `http://127.0.0.1:8000`. Il permet de déposer une demande, de consulter les demandes d'un usager (filtre par statut, compteurs, pagination) et de les faire avancer dans leur cycle de vie (prendre en charge, valider, rejeter avec motif). Les messages d'erreur de l'API y sont affichés tels quels.
+L'API répond alors sous `http://127.0.0.1:8000/api/...` : ouvrir `http://127.0.0.1:8000/api` dans un navigateur affiche la liste des routes disponibles, avec des liens d'exemple. L'écran est disponible sur `http://127.0.0.1:8000` : il affiche la liste des demandes d'un usager (chargée directement avec le NPI de démonstration), avec le nombre de demandes par statut sous forme de cartes cliquables qui filtrent la liste, la pagination et un skeleton loader pendant les chargements. Des boutons permettent aussi de faire avancer chaque demande dans son cycle de vie (prendre en charge, valider, rejeter avec motif). Les messages d'erreur de l'API y sont affichés tels quels.
 
 ### Données de démonstration
 
@@ -260,7 +260,7 @@ database/
 ├── migrations/..._create_demandes_table.php
 ├── factories/DemandeFactory.php
 └── seeders/DatabaseSeeder.php       # données de démonstration
-resources/views/demandes.blade.php   # écran : dépôt, consultation et traitement (bonus)
+resources/views/demandes.blade.php   # écran : consultation et traitement (bonus)
 routes/api.php                       # routes de l'API
 routes/web.php                       # route de l'écran
 tests/
@@ -295,7 +295,7 @@ tests/
 - Pagination de la liste, 20 demandes par page au maximum
 - Nombre de demandes par statut (`/api/statistiques`)
 - Tests automatisés des règles de gestion (`php artisan test`) : 46 tests, dont les 16 combinaisons de transitions du cycle de vie
-- Écran simple (`http://127.0.0.1:8000`) : liste des demandes d'un usager, avec en plus un formulaire de dépôt et des boutons de traitement, pour tester tout le socle depuis le navigateur
+- Écran simple (`http://127.0.0.1:8000`) : liste des demandes d'un usager, avec statistiques par statut mises en avant, filtre, pagination, skeleton loader et boutons de traitement. Le dépôt se fait par l'API (`POST /api/demandes`), comme le demande le sujet
 
 ### Ce qui manque, et pourquoi
 
