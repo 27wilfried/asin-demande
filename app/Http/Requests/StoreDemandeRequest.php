@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\TypeActe;
+use App\Rules\Npi;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -28,7 +29,7 @@ class StoreDemandeRequest extends FormRequest
     {
         return [
             // Règle : le NPI comporte exactement 10 chiffres.
-            'npi' => ['bail', 'required', 'string', 'regex:/^\d{10}$/'],
+            'npi' => ['bail', 'required', new Npi],
             // Règle : l'un des trois types d'actes cités.
             'type_acte' => ['bail', 'required', 'string', Rule::in(TypeActe::valeurs())],
             // Règle : entre 1 et 5 copies. « numeric » écarte les booléens, que « integer » accepterait (true = 1).
@@ -42,8 +43,6 @@ class StoreDemandeRequest extends FormRequest
 
         return [
             'npi.required' => 'Le NPI est obligatoire.',
-            'npi.string' => 'Le NPI doit être une suite de 10 chiffres.',
-            'npi.regex' => 'Le NPI doit comporter exactement 10 chiffres.',
             'type_acte.required' => "Le type d'acte est obligatoire.",
             'type_acte.string' => "Le type d'acte doit être une chaîne de caractères.",
             'type_acte.in' => "Le type d'acte doit être l'un des suivants : {$types}.",

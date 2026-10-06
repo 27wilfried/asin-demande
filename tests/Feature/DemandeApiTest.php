@@ -88,6 +88,15 @@ class DemandeApiTest extends TestCase
             ->assertSee('"statut_libelle":"Déposée"', false);
     }
 
+    public function test_un_json_mal_forme_est_refuse_avec_un_message_clair(): void
+    {
+        $this->call('POST', '/api/demandes', [], [], [], ['CONTENT_TYPE' => 'application/json'], '{"npi": "1234567890",')
+            ->assertStatus(400)
+            ->assertJsonPath('message', "Le corps de la requête n'est pas un JSON valide : vérifiez les guillemets, les virgules et les accolades.");
+
+        $this->assertDatabaseCount('demandes', 0);
+    }
+
     // ---------- Consultation ----------
 
     public function test_les_demandes_d_un_usager_sont_triees_de_la_plus_recente_a_la_plus_ancienne(): void
@@ -120,6 +129,10 @@ class DemandeApiTest extends TestCase
             ->assertUnprocessable()->assertJsonValidationErrors('statut');
 
         $this->getJson('/api/usagers/123/demandes')
+            ->assertUnprocessable()->assertJsonValidationErrors('npi');
+
+        // 10 chiffres suivis d'un saut de ligne : 11 caractères, donc refusé.
+        $this->getJson('/api/usagers/'.rawurlencode(self::NPI."\n").'/demandes')
             ->assertUnprocessable()->assertJsonValidationErrors('npi');
     }
 
@@ -199,6 +212,20 @@ class DemandeApiTest extends TestCase
                     ->assertStatus(409);
             }
         }
+    }
+
+    public function test_un_rejet_interdit_renvoie_409_meme_sans_motif(): void
+    {
+        // La transition est vérifiée avant le motif : le message donne la vraie raison du refus.
+        $validee = Demande::factory()->validee()->create();
+        $this->patchJson("/api/demandes/{$validee->id}/statut", ['statut' => 'rejetee'])
+            ->assertStatus(409)
+            ->assertJsonPath('message', 'La demande est déjà « Validée » : elle ne peut plus changer de statut.');
+
+        $deposee = Demande::factory()->create();
+        $this->patchJson("/api/demandes/{$deposee->id}/statut", ['statut' => 'rejetee'])
+            ->assertStatus(409)
+            ->assertJsonPath('transitions_possibles', ['en_cours']);
     }
 
     public function test_une_demande_inexistante_renvoie_404(): void

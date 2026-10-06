@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\StatutDemande;
+use App\Rules\Npi;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -30,7 +31,7 @@ class ListeDemandesRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'npi' => ['sometimes', 'bail', 'string', 'regex:/^\d{10}$/'],
+            'npi' => ['sometimes', new Npi],
             'statut' => ['sometimes', 'nullable', 'string', Rule::in(StatutDemande::valeurs())],
             'par_page' => ['sometimes', 'bail', 'integer', 'between:1,'.self::PAR_PAGE_MAX],
             'page' => ['sometimes', 'bail', 'integer', 'min:1'],
@@ -42,8 +43,6 @@ class ListeDemandesRequest extends FormRequest
         $statuts = implode(', ', StatutDemande::valeurs());
 
         return [
-            'npi.regex' => 'Le NPI doit comporter exactement 10 chiffres.',
-            'npi.string' => 'Le NPI doit être une suite de 10 chiffres.',
             'statut.in' => "Le statut doit être l'un des suivants : {$statuts}.",
             'statut.string' => 'Le statut doit être une chaîne de caractères.',
             'par_page.integer' => 'Le paramètre par_page doit être un nombre entier.',

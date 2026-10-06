@@ -8,7 +8,7 @@ use Illuminate\Validation\Rule;
 
 /**
  * Validation du format d'un changement de statut.
- * La validité de la transition elle-même est contrôlée par DemandeService.
+ * Les règles métier (transition autorisée, rejet motivé) sont contrôlées par DemandeService.
  */
 class ChangerStatutRequest extends FormRequest
 {
@@ -21,8 +21,8 @@ class ChangerStatutRequest extends FormRequest
     {
         return [
             'statut' => ['bail', 'required', 'string', Rule::in(StatutDemande::valeurs())],
-            // Règle : un rejet doit toujours être motivé.
-            'motif' => ['required_if:statut,'.StatutDemande::Rejetee->value, 'nullable', 'string', 'max:1000'],
+            // L'obligation de motiver un rejet est vérifiée par DemandeService, après la transition.
+            'motif' => ['nullable', 'string', 'max:1000'],
         ];
     }
 
@@ -34,7 +34,6 @@ class ChangerStatutRequest extends FormRequest
             'statut.required' => 'Le nouveau statut est obligatoire.',
             'statut.string' => 'Le statut doit être une chaîne de caractères.',
             'statut.in' => "Le statut doit être l'un des suivants : {$statuts}.",
-            'motif.required_if' => 'Un rejet doit toujours être motivé : le champ motif est obligatoire.',
             'motif.string' => 'Le motif doit être un texte.',
             'motif.max' => 'Le motif ne doit pas dépasser 1000 caractères.',
         ];

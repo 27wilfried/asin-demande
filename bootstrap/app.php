@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\JsonLisible;
+use App\Http\Middleware\RefuserJsonInvalide;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -20,6 +21,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         // Middleware global : s'applique aussi aux réponses d'erreur (404 de route inconnue comprise).
         $middleware->append(JsonLisible::class);
+
+        // Routes /api : un corps JSON mal formé est refusé en 400 avec un message clair.
+        $middleware->api(append: [RefuserJsonInvalide::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Toutes les erreurs de /api et /api/* sont renvoyées en JSON, même sans en-tête "Accept: application/json".

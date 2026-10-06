@@ -31,24 +31,29 @@ class DemandeService
     /**
      * Fait avancer une demande dans son cycle de vie.
      *
-     * @throws TransitionInterditeException si la transition n'est pas autorisée
-     * @throws ValidationException si un rejet n'est pas motivé
+     * La transition est vérifiée avant le motif : rejeter une demande déjà validée renvoie
+     * « elle ne peut plus changer de statut » (409), et non une demande de motif trompeuse.
+     *
+     * @throws TransitionInterditeException si la transition n'est pas autorisée (HTTP 409)
+     * @throws ValidationException si un rejet n'est pas motivé (HTTP 422)
      */
     public function changerStatut(Demande $demande, StatutDemande $cible, ?string $motif = null): Demande
     {
-        // Double contrôle côté métier, même si la requête HTTP l'a déjà vérifié.
-        if ($cible === StatutDemande::Rejetee && blank($motif)) {
-            throw ValidationException::withMessages([
-                'motif' => 'Un rejet doit toujours être motivé : le champ motif est obligatoire.',
-            ]);
-        }
-
         return DB::transaction(function () use ($demande, $cible, $motif) {
-            // Verrou sur la ligne : deux agents ne peuvent pas traiter la même demande en même temps.
+            // Verrou sur la ligne (MySQL, PostgreSQL) : deux agents ne peuvent pas traiter la même
+            // demande en même temps. SQLite, lui, sérialise déjà les écritures sur toute la base.
             $demande = Demande::whereKey($demande->id)->lockForUpdate()->firstOrFail();
 
+            // Règle : cycle de vie déposée -> en cours -> validée | rejetée, statuts finaux figés.
             if (! $demande->statut->peutPasserA($cible)) {
                 throw new TransitionInterditeException($demande->statut, $cible);
+            }
+
+            // Règle : un rejet doit toujours être motivé.
+            if ($cible === StatutDemande::Rejetee && blank($motif)) {
+                throw ValidationException::withMessages([
+                    'motif' => 'Un rejet doit toujours être motivé : le champ motif est obligatoire.',
+                ]);
             }
 
             $demande->statut = $cible;
